@@ -29,7 +29,7 @@ export default function UploadFile({
   } = useDropzone({
     onDrop,
     accept:
-      'text/csv,text/plain,application/json,application/vnd.ms-excel,text/tsv,text/tab-separated-values',
+      'text/csv,text/plain,application/json,application/vnd.ms-excel,text/tsv,text/tab-separated-values,.geojson',
     maxFiles: 1,
   })
   return (

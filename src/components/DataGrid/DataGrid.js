@@ -185,6 +185,15 @@ function DataTypeSelector({
             >
               <StringIcon /> String
             </div>
+            <div
+              data-datatype="string"
+              onClick={handleTypeChange}
+              className={classNames(S['data-type-selector-item'], {
+                [S.selected]: currentType === 'geometry',
+              })}
+            >
+              <StringIcon /> Geometry
+            </div>
           </div>
         )}
       </Overlay>
@@ -266,13 +275,14 @@ export default function DataGrid({
         sortColumn: sortColumn,
         sortDirection: sortDirection,
         headerRenderer: HeaderRenderer,
-        editable: true,
+        editable: dataTypes[k] === 'geometry' ? false : true,
         formatter: ({ row }) => {
           return (
             <div
               className={classNames({ [S['has-error']]: row?._errors?.[k] })}
             >
-              {row[k]?.toString()}
+              {/* {dataTypes[k] === 'geometry'  ?  row[k].type:  row[k]?.toString()} */}
+              {dataTypes[k] === 'geometry'  ?  row[k]?.type:  row[k]?.toString()}
               {/* {row[k]} */}
             </div>
           )
@@ -280,7 +290,7 @@ export default function DataGrid({
         _raw_datatype: dataTypes[k],
         _raw_coerceType: (nextType) =>
           coerceTypes({ ...dataTypes, [k]: nextType }),
-        sortable: true,
+        sortable: dataTypes[k] === 'geometry' ? false : true,
         resizable: true,
         width: columnWidth
       })),

@@ -10,6 +10,30 @@ function JsonParser(dataString) {
   return [JSON.parse(trimmedDataString), {}]
 }
 
+
+function GeoJsonParser(dataString) {
+  //Removing white lines (useful when pasting from sheets, ecc)
+  const trimmedDataString = dataString
+    .trim()
+    .replace(/^(?=\n)$|^\s*|\s*$|\n\n+/gm, '')
+
+  const jsonData = JSON.parse(trimmedDataString)
+  const features = jsonData.features || []  
+  if(features.length){
+    console.log(features)
+    const data = features.map(feature => {
+      const properties = feature.properties || {}
+      return {
+        geometry: feature.geometry,
+        ...properties
+      }
+    })
+    return [data, {}]
+  }
+  
+  return [features, {}]
+}
+
 function CsvParser(dataString, opts) {
   //Removing white lines (useful when pasting from sheets, ecc)
   const trimmedDataString = dataString
@@ -62,6 +86,7 @@ function SparqlParser(data, opts) {
 
 const PARSERS = [
   { dataType: 'sparql', parse: SparqlParser },
+  { dataType: 'geojson', parse: GeoJsonParser },
   { dataType: 'json', parse: JsonParser },
   { dataType: 'csv', parse: CsvParser },
 ]

@@ -1,5 +1,5 @@
 // import React from "react"
-import { BsClock, BsHash, BsType } from 'react-icons/bs'
+import { BsClock, BsHash, BsType, BsMap } from 'react-icons/bs'
 import arEG from 'd3-time-format/locale/ar-EG.json'
 import caES from 'd3-time-format/locale/ca-ES.json'
 import csCZ from 'd3-time-format/locale/cs-CZ.json'
@@ -41,11 +41,14 @@ import zhTW from 'd3-time-format/locale/zh-TW.json'
 export const DateIcon = BsClock
 export const NumberIcon = BsHash
 export const StringIcon = BsType
+export const GeometryIcon = BsMap
 
 export const dataTypeIcons = {
   date: DateIcon,
   number: NumberIcon,
   string: StringIcon,
+  object: StringIcon,
+  geometry: GeometryIcon,
 }
 
 export const localeList = {
