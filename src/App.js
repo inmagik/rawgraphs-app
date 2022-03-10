@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import {
   getOptionsConfig,
   getDefaultOptionsValues,
+  deserializeProject,
 } from '@rawgraphs/rawgraphs-core'
 
 import HeaderItems from './HeaderItems'
@@ -15,7 +16,8 @@ import charts from './charts'
 import ChartSelector from './components/ChartSelector'
 import DataMapping from './components/DataMapping'
 import ChartPreviewWithOptions from './components/ChartPreviewWIthOptions'
-import Exporter from './components/Exporter'
+import SimpleChartPreview from './components/SimpleChartPreview'
+import ExporterEmbed from './components/ExporterEmbed'
 import get from 'lodash/get'
 import usePrevious from './hooks/usePrevious'
 import { serializeProject } from '@rawgraphs/rawgraphs-core'
@@ -162,80 +164,127 @@ function App() {
     setVisualOptions(getDefaultOptionsValues(options))
   }, [])
 
+  //postMessage communication
+  const [contentId, setContentId] = useState('')
+  const [previewMode, setPreviewMode] = useState('')
+
+  const lasImportProjectRef = useRef()
+  useEffect(() => {
+    lasImportProjectRef.current = importProject
+  })
+  
+  useEffect(() => {
+    console.log(
+      'setup postmessage from iframe and getting contentId from params'
+    )
+    let listener
+
+    const contentIdFromUrl = new URLSearchParams(window.location.search).get(
+      'contentId'
+    )
+    setContentId(contentIdFromUrl)
+
+    const previewModeFromUrl = new URLSearchParams(window.location.search).get(
+      'previewMode'
+    )
+    setPreviewMode((previewModeFromUrl ?? '').toLowerCase() === 'true')
+
+    console.log('contentId', contentIdFromUrl)
+    if (contentIdFromUrl) {
+      const handler = (mesg) => {
+        if (mesg?.data?.contentId === contentIdFromUrl) {
+          console.log('catched from iframe', mesg)
+          if (mesg.data.project) {
+            const projectStr = JSON.stringify(mesg.data.project)
+            const project = deserializeProject(projectStr, charts)
+            const lastImportProject = lasImportProjectRef.current
+            if (lastImportProject) {
+              lastImportProject(project, true)
+            }
+          }
+        }
+      }
+
+      listener = window.addEventListener('message', handler)
+      return () => {
+        if (listener) {
+          window.removeEventListener('message', handler)
+        }
+      }
+    }
+  }, [])
+
   return (
     <div className="App">
-      <Header menuItems={HeaderItems} />
-      <div className="app-sections">
-        <Section title={`1. Load your data`} loading={loading}>
-          <DataLoader {...dataLoader} hydrateFromProject={importProject} />
-        </Section>
-        {data && (
-          <Section title="2. Choose a chart">
-            <ChartSelector
-              availableCharts={charts}
-              currentChart={currentChart}
-              setCurrentChart={handleChartChange}
-            />
-          </Section>
-        )}
-        {data && currentChart && (
-          <Section title={`3. Mapping`} loading={mappingLoading}>
-            <DataMapping
-              ref={dataMappingRef}
-              dimensions={currentChart.dimensions}
-              dataTypes={data.dataTypes}
-              mapping={mapping}
-              setMapping={setMapping}
-            />
-          </Section>
-        )}
-        {data && currentChart && (
-          <Section title="4. Customize">
-            <ChartPreviewWithOptions
-              chart={currentChart}
-              dataset={data.dataset}
-              dataTypes={data.dataTypes}
-              mapping={mapping}
-              visualOptions={visualOptions}
-              setVisualOptions={setVisualOptions}
-              setRawViz={setRawViz}
-              setMappingLoading={setMappingLoading}
-            />
-          </Section>
-        )}
-        {data && currentChart && rawViz && (
-          <Section title="5. Export">
-            <Exporter rawViz={rawViz} exportProject={exportProject} />
-          </Section>
-        )}
-        <Footer />
-        <CookieConsent
-          location="bottom"
-          buttonText="Got it!"
-          style={{ background: '#f5f5f5', color: '#646467' }}
-          buttonStyle={{
-            background: '#646467',
-            color: 'white',
-            fontSize: '13px',
-            borderRadius: '3px',
-            padding: '5px 20px',
-          }}
-          buttonClasses="btn btn-default btn-grey"
-          acceptOnScroll={true}
-        >
-          This website uses Google Analytics to anonymously collect browsing
-          data.{' '}
-          <a
-            href="https://rawgraphs.io/privacy/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-2 text-body border-bottom border-dark"
-          >
-            Learn More
-          </a>
-        </CookieConsent>
-      </div>
-      <ScreenSizeAlert />
+      {!previewMode && (
+        <>
+          <Header menuItems={HeaderItems} />
+          <div className="app-sections">
+            <Section title={`1. Load your data`} loading={loading}>
+              <DataLoader {...dataLoader} hydrateFromProject={importProject} />
+            </Section>
+            {data && (
+              <Section title="2. Choose a chart">
+                <ChartSelector
+                  availableCharts={charts}
+                  currentChart={currentChart}
+                  setCurrentChart={handleChartChange}
+                />
+              </Section>
+            )}
+            {data && currentChart && (
+              <Section title={`3. Mapping`} loading={mappingLoading}>
+                <DataMapping
+                  ref={dataMappingRef}
+                  dimensions={currentChart.dimensions}
+                  dataTypes={data.dataTypes}
+                  mapping={mapping}
+                  setMapping={setMapping}
+                />
+              </Section>
+            )}
+            {data && currentChart && (
+              <Section title="4. Customize">
+                <ChartPreviewWithOptions
+                  chart={currentChart}
+                  dataset={data.dataset}
+                  dataTypes={data.dataTypes}
+                  mapping={mapping}
+                  visualOptions={visualOptions}
+                  setVisualOptions={setVisualOptions}
+                  setRawViz={setRawViz}
+                  setMappingLoading={setMappingLoading}
+                />
+              </Section>
+            )}
+            {data && currentChart && rawViz && (
+              <Section title="5. Export">
+                {contentId && (
+                  <ExporterEmbed
+                    rawViz={rawViz}
+                    exportProject={exportProject}
+                    contentId={contentId}
+                  />
+                )}
+              </Section>
+            )}
+            <Footer />
+          </div>
+        </>
+      )}
+      {previewMode && data && currentChart && (
+        <>
+        <SimpleChartPreview
+          contentId={contentId}
+          currentChart={currentChart}
+          dataset={data.dataset}
+          dataTypes={data.dataTypes}
+          mapping={mapping}
+          visualOptions={visualOptions}
+        ></SimpleChartPreview>
+        </>
+      )}
+      {/* <ScreenSizeAlert /> */}
     </div>
   )
 }
