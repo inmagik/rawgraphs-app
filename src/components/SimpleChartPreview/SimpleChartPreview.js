@@ -18,12 +18,9 @@ export default function SimpleChartPreview({
       dataTypes,
       visualOptions,
     })
-    console.log('v', viz, dataset)
     try {
-      const rawViz = viz.renderToDOM(domRef.current)
-
+      viz.renderToDOM(domRef.current)
       if (contentId) {
-          
         window.parent.postMessage(
           { event: 'raw-preview-ready', visualOptions, contentId },
           '*'

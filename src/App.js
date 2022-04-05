@@ -301,7 +301,23 @@ function App() {
         }
       }
     }
-  }, [])
+  }, [charts])
+
+
+  const confirmProject = useCallback(
+    () => {
+      exportProject()
+      .then(project => {
+        console.log("exporting", project)
+      window.parent.postMessage(
+        {event:"raw-chart-ready", project, contentId},
+        "*",
+      )
+      })
+      
+    },
+    [contentId, exportProject]
+  )
 
   return (
     <div className="App">
@@ -369,12 +385,13 @@ function App() {
                   setVisualOptions={setVisualOptions}
                   setRawViz={setRawViz}
                   setMappingLoading={setMappingLoading}
+                  onRenderSuccess={confirmProject}
                 />
               </Section>
             )}
             {data && currentChart && rawViz && (
               <Section title="5. Export">
-                <ExporterEmbed rawViz={rawViz} exportProject={exportProject} />
+                <ExporterEmbed rawViz={rawViz} exportProject={exportProject} confirmProject={confirmProject} contentId={contentId}/>
               </Section>
             )}
             <Footer />

@@ -10,7 +10,7 @@ function downloadBlob(url, filename) {
   return a
 }
 
-export default function Exporter({ rawViz, exportProject, contentId }) {
+export default function Exporter({ rawViz, exportProject, contentId, confirmProject }) {
   const downloadSvg = useCallback(
     (filename) => {
       var svgString = new XMLSerializer().serializeToString(
@@ -48,21 +48,7 @@ export default function Exporter({ rawViz, exportProject, contentId }) {
     },
     [rawViz]
   )
-
-  const confirmProject = useCallback(
-    (filename) => {
-      const project = exportProject()
-      console.log("exporting", project)
-      window.parent.postMessage(
-        {event:"raw-chart-ready", project, contentId},
-        "*",
-      )
-    },
-    [contentId, exportProject]
-  )
-
-
-
+ 
   return (
     <div className="row">
      

@@ -14,6 +14,7 @@ const ChartPreview = ({
   setError,
   setRawViz,
   mappedData,
+  onRenderSuccess,
 }) => {
   const domRef = useRef(null)
 
@@ -122,6 +123,7 @@ const ChartPreview = ({
         setRawViz(rawViz)
         setError(null)
         onChartRendered(chart.metadata)
+        onRenderSuccess(rawViz)
       } catch (e) {
         console.log("chart error", e)
         setError({ variant: 'danger', message: 'Chart error. ' + e.message })
